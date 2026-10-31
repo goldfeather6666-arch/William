@@ -1,151 +1,121 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { motion, MotionConfig } from "framer-motion";
-import { ChevronLeft, type LucideIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  BookOpen,
+  ChevronsLeft,
+  FolderOpen,
+  Home,
+  Stethoscope,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export interface SidebarItem {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  badge?: string | number;
-  active?: boolean;
+type NavItem = { href: string; label: string; icon: React.ElementType };
+
+const primaryNav: NavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/tutor", label: "AI Tutor", icon: Sparkles },
+  { href: "/library", label: "Knowledge Library", icon: FolderOpen },
+];
+
+const studyNav: NavItem[] = [
+  { href: "/notes", label: "Notes", icon: BookOpen },
+  { href: "/flashcards", label: "Flashcards", icon: BookOpen },
+  { href: "/mcq", label: "MCQ Bank", icon: BookOpen },
+  { href: "/cases", label: "Clinical Cases", icon: Stethoscope },
+];
+
+function Item({ item, collapsed, active }: { item: NavItem; collapsed: boolean; active: boolean }) {
+  const link = (
+    <Link
+      href={item.href}
+      className={cn(
+        "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        active ? "bg-primary-soft text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <item.icon className="h-4 w-4 shrink-0" />
+      {!collapsed && <span>{item.label}</span>}
+    </Link>
+  );
+
+  if (collapsed) {
+    return (
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>{link}</TooltipTrigger>
+        <TooltipContent side="right">{item.label}</TooltipContent>
+      </Tooltip>
+    );
+  }
+  return link;
 }
 
-interface SidebarProps {
-  items: SidebarItem[];
-  header?: ReactNode;
-  collapsed: boolean;
-  onToggle: () => void;
-  footer?: ReactNode;
-  className?: string;
-}
+export function Sidebar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  const pathname = usePathname();
 
-const EXPANDED_WIDTH = 256;
-const COLLAPSED_WIDTH = 64;
-
-export function Sidebar({
-  items,
-  header,
-  collapsed,
-  onToggle,
-  footer,
-  className,
-}: SidebarProps) {
   return (
-    <MotionConfig reducedMotion="user">
-      <motion.aside
-        aria-label="Primary"
-        initial={false}
-        animate={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
-        transition={{ type: "tween", duration: 0.25, ease: "easeInOut" }}
+    <>
+      {/* Mobile overlay */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+            onClick={onToggle}
+          />
+        )}
+      </AnimatePresence>
+
+      <aside
         className={cn(
-          "flex h-full flex-col overflow-hidden border-r bg-card/60",
-          className,
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-border bg-card transition-[width] duration-200 lg:relative lg:z-0",
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0 lg:w-16",
         )}
       >
-        {header ? (
-          <div
-            className={cn(
-              "flex h-16 shrink-0 items-center border-b",
-              collapsed ? "justify-center px-2" : "px-4",
-            )}
-          >
-            {header}
+        <div className="flex h-16 items-center justify-between px-4">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Stethoscope className="h-4 w-4" />
+            </span>
+            {open && <span className="font-display text-base font-semibold">MedCoach</span>}
+          </Link>
+          <Button variant="ghost" size="icon-sm" onClick={onToggle} aria-label="Toggle sidebar" className="lg:flex">
+            {open ? <ChevronsLeft className="h-4 w-4" /> : <X className="h-4 w-4 lg:hidden" />}
+          </Button>
+        </div>
+        <Separator />
+        <nav className="flex-1 space-y-6 overflow-y-auto p-3">
+          <div className="space-y-1">
+            {primaryNav.map((item) => (
+              <Item key={item.href} item={item} collapsed={!open} active={pathname === item.href} />
+            ))}
           </div>
-        ) : null}
-
-        <TooltipProvider delayDuration={0}>
-          <ScrollArea className="min-h-0 flex-1">
-            <nav
-              className={cn(
-                "flex flex-col gap-1 py-3",
-                collapsed ? "items-center px-2" : "px-3",
-              )}
-            >
-              {items.map((item) => {
-                const Icon = item.icon;
-                const link = (
-                  <a
-                    href={item.href}
-                    aria-current={item.active ? "page" : undefined}
-                    className={cn(
-                      "group flex h-10 items-center gap-2.5 rounded-lg text-sm font-medium transition-colors",
-                      collapsed ? "w-10 justify-center" : "w-full px-3",
-                      item.active
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )}
-                  >
-                    <Icon className="size-4 shrink-0" />
-                    {!collapsed && (
-                      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                    )}
-                    {!collapsed && item.badge != null ? (
-                      <Badge
-                        variant="secondary"
-                        className="shrink-0 px-1.5 text-[10px]"
-                      >
-                        {item.badge}
-                      </Badge>
-                    ) : null}
-                  </a>
-                );
-
-                if (!collapsed) return link;
-
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>{link}</TooltipTrigger>
-                    <TooltipContent side="right" className="z-50">
-                      {item.label}
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </nav>
-          </ScrollArea>
-        </TooltipProvider>
-
-        {footer ? (
-          <div
-            className={cn(
-              "shrink-0 border-t",
-              collapsed ? "flex justify-center p-2" : "p-3",
-            )}
-          >
-            {footer}
-          </div>
-        ) : null}
-
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "flex h-10 shrink-0 items-center gap-2 border-t text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-            collapsed ? "w-full justify-center" : "w-full px-3",
+          {open && (
+            <div className="space-y-1">
+              <p className="px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Study</p>
+              {studyNav.map((item) => (
+                <Item key={item.href} item={item} collapsed={false} active={pathname.startsWith(item.href)} />
+              ))}
+            </div>
           )}
-        >
-          <ChevronLeft
-            className={cn(
-              "size-4 transition-transform duration-200",
-              collapsed && "rotate-180",
-            )}
-          />
-          {!collapsed && <span>Collapse</span>}
-        </button>
-      </motion.aside>
-    </MotionConfig>
+        </nav>
+        <div className="p-3">
+          <TooltipProvider>
+            <div className="rounded-lg border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground">
+              {open ? "MedCoach AI · educational use only" : <span className="sr-only">Educational use only</span>}
+            </div>
+          </TooltipProvider>
+        </div>
+      </aside>
+    </>
   );
 }
