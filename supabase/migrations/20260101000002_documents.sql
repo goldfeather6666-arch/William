@@ -35,7 +35,9 @@ create table public.document_chunks (
   chunk_index    int not null,
   content        text not null,
   token_estimate int not null default 0,
-  embedding      vector(1536),
+  -- Embeddings are stored as jsonb number arrays to support any provider
+  -- dimension and the deterministic local-hash fallback.
+  embedding      jsonb,
   embedding_model text,
   unique (document_id, chunk_index)
 );
@@ -58,6 +60,19 @@ create table public.document_jobs (
 );
 
 create index jobs_status_idx on public.document_jobs(status);
+
+-- Cosine similarity over jsonb embedding arrays (provider-agnostic).
+create or replace function public.cosine_similarity(a jsonb, b jsonb)
+returns double precision language sql immutable as $$
+  select case
+    when a is null or b is null then 0
+    else (
+      select (sum(x*y) / nullif(sqrt(sum(x*x)) * sqrt(sum(y*y)), 0))
+      from jsonb_array_elements_text(a) with ordinality as ax(x, i)
+      join jsonb_array_elements_text(b) with ordinality as by(y, i) using (i)
+    )
+  end;
+$$;
 
 alter table public.documents enable row level security;
 alter table public.document_chunks enable row level security;
