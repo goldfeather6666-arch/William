@@ -587,7 +587,7 @@ function CreatePlanDialog({
         <DialogHeader>
           <DialogTitle>Create study plan</DialogTitle>
           <DialogDescription>
-            We'll schedule two focused tasks per day for the next 14 days, rotating across reading, flashcards, MCQ,
+            We&apos;ll schedule two focused tasks per day for the next 14 days, rotating across reading, flashcards, MCQ,
             cases and revision.
           </DialogDescription>
         </DialogHeader>
