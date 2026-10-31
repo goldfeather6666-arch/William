@@ -166,7 +166,7 @@ alter table public.exam_sessions enable row level security;
 alter table public.exam_questions enable row level security;
 alter table public.exam_answers enable row level security;
 
--- Owner-scoped helper policies.
+-- Owner-scoped helper policies (tables with a user_id column).
 create or replace function public.owner_row_policies(tbl text) returns void language plpgsql as $$
 begin
   execute format('create policy %I on %I for select using (auth.uid() = user_id or public.is_platform_admin(auth.uid()))', tbl || '_select', tbl);
@@ -182,8 +182,28 @@ select public.owner_row_policies('flashcards');
 select public.owner_row_policies('flashcard_reviews');
 select public.owner_row_policies('question_attempts');
 select public.owner_row_policies('exam_sessions');
-select public.owner_row_policies('exam_questions');
-select public.owner_row_policies('exam_answers');
+
+-- exam_questions / exam_answers have no user_id; ownership flows through the
+-- parent exam session.
+create policy examq_select on public.exam_questions for select
+  using (exists (select 1 from public.exam_sessions s where s.id = exam_questions.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
+create policy examq_insert on public.exam_questions for insert
+  with check (exists (select 1 from public.exam_sessions s where s.id = exam_questions.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
+create policy examq_update on public.exam_questions for update
+  using (exists (select 1 from public.exam_sessions s where s.id = exam_questions.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))))
+  with check (exists (select 1 from public.exam_sessions s where s.id = exam_questions.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
+create policy examq_delete on public.exam_questions for delete
+  using (exists (select 1 from public.exam_sessions s where s.id = exam_questions.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
+
+create policy exama_select on public.exam_answers for select
+  using (exists (select 1 from public.exam_sessions s where s.id = exam_answers.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
+create policy exama_insert on public.exam_answers for insert
+  with check (exists (select 1 from public.exam_sessions s where s.id = exam_answers.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
+create policy exama_update on public.exam_answers for update
+  using (exists (select 1 from public.exam_sessions s where s.id = exam_answers.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))))
+  with check (exists (select 1 from public.exam_sessions s where s.id = exam_answers.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
+create policy exama_delete on public.exam_answers for delete
+  using (exists (select 1 from public.exam_sessions s where s.id = exam_answers.session_id and (s.user_id = auth.uid() or public.is_platform_admin(auth.uid()))));
 
 -- MCQ bank: readable by all authenticated users (shared verified bank),
 -- writable by platform admins and instructors.
