@@ -7,12 +7,12 @@ export const metadata: Metadata = {
   title: "Log in",
 };
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams?: { error?: string; next?: string };
+  searchParams?: Promise<{ error?: string; next?: string }>;
 }) {
-  const error = searchParams?.error;
+  const { error } = (await searchParams) ?? {};
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
