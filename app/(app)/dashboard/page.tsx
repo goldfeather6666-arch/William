@@ -1,102 +1,148 @@
-import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Brain,
-  CalendarClock,
-  FileText,
-  Layers,
-  MessageSquare,
-  Stethoscope,
-  TrendingUp,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { PageHeader } from "@/components/layout/page-header";
-import { MotionCard, AnimatedNumber } from "@/components/ui/motion";
+import { ArrowRight, FolderOpen, Sparkles, Timer } from "lucide-react";
+import { formatDate } from "@/lib/utils";
+import type { Profile } from "@/lib/types";
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
+async function getDashboardData(userId: string) {
+  const supabase = await createClient();
+  const [profileRes, docsRes, attemptsRes, cardsRes, plansRes, examsRes] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    supabase.from("documents").select("id,status", { count: "exact", head: true }).eq("user_id", userId).eq("status", "ready"),
+    supabase.from("question_attempts").select("id,is_correct", { count: "exact", head: true }).eq("user_id", userId),
+    supabase.from("flashcards").select("id", { count: "exact", head: true }).eq("user_id", userId).lte("due_at", new Date().toISOString()),
+    supabase.from("study_plans").select("id,title,exam_date").eq("user_id", userId).order("created_at", { ascending: false }).limit(1),
+    supabase.from("exam_sessions").select("id,status,score,max_score").eq("user_id", userId).order("created_at", { ascending: false }).limit(1),
+  ]);
 
-const QUICK_ACTIONS = [
-  { label: "Ask the AI Tutor", href: "/tutor", icon: MessageSquare },
-  { label: "Study flashcards", href: "/flashcards", icon: Layers },
-  { label: "Take an MCQ quiz", href: "/mcq", icon: Brain },
-  { label: "Generate notes", href: "/notes", icon: FileText },
-  { label: "Practice a clinical case", href: "/cases", icon: Stethoscope },
-  { label: "Review study plan", href: "/planner", icon: CalendarClock },
-];
+  return {
+    profile: profileRes.data as Profile | null,
+    readyDocs: docsRes.count ?? 0,
+    attempts: attemptsRes.count ?? 0,
+    correct: (attemptsRes.data as { is_correct: boolean }[] | null)?.filter((a) => a.is_correct).length ?? 0,
+    dueCards: cardsRes.count ?? 0,
+    latestPlan: plansRes.data?.[0] ?? null,
+    latestExam: examsRes.data?.[0] ?? null,
+  };
+}
 
-export default function DashboardPage() {
-  const mastery = 64;
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const data = await getDashboardData(user.id);
+  const name = (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ?? "Student";
+  const correctPct = data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0;
+
+  const modules = [
+    { href: "/tutor", icon: Sparkles, title: "AI Tutor", blurb: "Ask anything, in 6 modes" },
+    { href: "/library", icon: FolderOpen, title: "Knowledge Library", blurb: "Upload and ask against your materials" },
+  ];
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Welcome back"
-        description="Here is a snapshot of your learning."
-        actions={
-          <Button asChild>
-            <Link href="/tutor">
-              Start a study session <ArrowRight className="size-4" />
-            </Link>
-          </Button>
-        }
-      />
-
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MotionCard className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Mastery</p>
-            <TrendingUp className="size-4 text-primary" />
-          </div>
-          <p className="mt-2 font-display text-3xl font-semibold">
-            <AnimatedNumber value={mastery} format={(n) => `${n}%`} />
+    <div className="mx-auto max-w-6xl space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-semibold sm:text-3xl">Welcome back, {name}</h1>
+          <p className="mt-1 text-muted-foreground">
+            {data.profile?.curriculum ? `Curriculum: ${data.profile.curriculum}` : "Set up your profile to personalise learning"}
           </p>
-          <Progress value={mastery} className="mt-3 h-2" />
-        </MotionCard>
-        <MotionCard delay={0.05} className="p-5">
-          <p className="text-sm text-muted-foreground">Cards due</p>
-          <p className="mt-2 font-display text-3xl font-semibold">24</p>
-          <p className="mt-1 text-xs text-muted-foreground">~10 min review</p>
-        </MotionCard>
-        <MotionCard delay={0.1} className="p-5">
-          <p className="text-sm text-muted-foreground">Questions answered</p>
-          <p className="mt-2 font-display text-3xl font-semibold">132</p>
-          <p className="mt-1 text-xs text-muted-foreground">78% correct</p>
-        </MotionCard>
-        <MotionCard delay={0.15} className="p-5">
-          <p className="text-sm text-muted-foreground">Next exam</p>
-          <p className="mt-2 font-display text-3xl font-semibold">42</p>
-          <p className="mt-1 text-xs text-muted-foreground">days away</p>
-        </MotionCard>
+        </div>
+        <Button asChild>
+          <Link href="/tutor">
+            Ask the tutor <ArrowRight className="ml-1 h-4 w-4" />
+          </Link>
+        </Button>
       </div>
 
-      {/* Today's focus */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Today&apos;s focus</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          {QUICK_ACTIONS.map((a) => {
-            const Icon = a.icon;
-            return (
-              <Link
-                key={a.href}
-                href={a.href}
-                className="flex items-center gap-3 rounded-lg border p-3 text-sm font-medium transition-colors hover:bg-muted/60"
-              >
-                <Icon className="size-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1">{a.label}</span>
-                <ArrowRight className="size-4 text-muted-foreground" />
-              </Link>
-            );
-          })}
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Ready documents</CardDescription>
+            <CardTitle className="text-3xl">{data.readyDocs}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Processed and searchable</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Questions attempted</CardDescription>
+            <CardTitle className="text-3xl">{data.attempts}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Progress value={correctPct} className="mt-1" />
+            <p className="mt-1 text-xs text-muted-foreground">Accuracy {correctPct}%</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Flashcards due</CardDescription>
+            <CardTitle className="text-3xl">{data.dueCards}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Ready for review today</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Latest exam</CardDescription>
+            <CardTitle className="text-2xl">
+              {data.latestExam ? (data.latestExam.score != null ? `${data.latestExam.score}/${data.latestExam.max_score}` : "In progress") : "None yet"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Timer className="h-3 w-3" />
+              {data.latestExam ? data.latestExam.status : "Take a mock exam to start"}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {data.latestPlan && (
+        <Card className="border-primary/30 bg-primary-soft/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Timer className="h-4 w-4 text-primary" /> {data.latestPlan.title}
+            </CardTitle>
+            <CardDescription>
+              {data.latestPlan.exam_date ? `Target exam: ${formatDate(data.latestPlan.exam_date)}` : "No exam date set yet"}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
+
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-semibold">Continue learning</h2>
+          <Badge variant="soft">2 modules</Badge>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {modules.map((m) => (
+            <Link key={m.href} href={m.href}>
+              <Card className="h-full transition-shadow hover:shadow-lifted">
+                <CardContent className="flex items-start gap-3 p-5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+                    <m.icon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="font-medium">{m.title}</div>
+                    <div className="text-sm text-muted-foreground">{m.blurb}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
