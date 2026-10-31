@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
+    --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+    --radius: 0.85rem;
+
+    /* Warm clinical paper + deep teal ink */
+    --background: 42 33% 98%;
+    --foreground: 198 28% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 198 28% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 198 28% 12%;
+    --primary: 175 74% 24%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 174 52% 93%;
+    --secondary: 196 22% 94%;
+    --secondary-foreground: 198 28% 16%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 198 11% 40%;
+    --accent: 34 92% 50%;
+    --accent-foreground: 28 60% 14%;
+    --clinical: 199 88% 38%;
+    --clinical-foreground: 0 0% 100%;
+    --caution: 32 94% 42%;
+    --caution-foreground: 0 0% 100%;
+    --destructive: 0 68% 44%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 196 18% 87%;
+    --input: 196 18% 84%;
+    --ring: 175 74% 30%;
+
+    --shadow-color: 9 27 24;
+  }
+
+  .dark {
+    --background: 200 32% 7%;
+    --foreground: 42 24% 96%;
+    --card: 200 26% 10%;
+    --card-foreground: 42 24% 96%;
+    --popover: 200 28% 11%;
+    --popover-foreground: 42 24% 96%;
+    --primary: 172 58% 46%;
+    --primary-foreground: 200 40% 8%;
+    --primary-soft: 175 34% 16%;
+    --secondary: 200 18% 16%;
+    --secondary-foreground: 42 24% 94%;
+    --muted: 200 18% 14%;
+    --muted-foreground: 197 12% 66%;
+    --accent: 36 92% 58%;
+    --accent-foreground: 30 60% 10%;
+    --clinical: 199 90% 58%;
+    --clinical-foreground: 200 40% 8%;
+    --caution: 38 94% 56%;
+    --caution-foreground: 30 60% 10%;
+    --destructive: 0 66% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 199 16% 20%;
+    --input: 199 16% 23%;
+    --ring: 172 58% 48%;
+
+    --shadow-color: 0 0 0;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply tracking-tight;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  .surface-panel {
+    @apply rounded-xl border border-border/80 bg-card shadow-subtle;
+  }
+
+  .surface-inset {
+    @apply rounded-lg border border-border/60 bg-muted/50;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  .kbd {
+    @apply rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted-foreground;
+  }
+
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .grid-clinical {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(100deg, hsl(var(--primary)), hsl(var(--clinical)) 55%, hsl(var(--accent)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Rich text output from AI services */
+  .prose-med {
+    @apply text-[15px] leading-relaxed text-foreground;
+  }
+  .prose-med > * + * {
+    @apply mt-3;
+  }
+  .prose-med h2 {
+    @apply mt-6 font-display text-xl font-semibold;
+  }
+  .prose-med h3 {
+    @apply mt-5 text-base font-semibold tracking-tight;
+  }
+  .prose-med h4 {
+    @apply mt-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+  .prose-med ul {
+    @apply list-disc space-y-1.5 pl-5 marker:text-primary;
+  }
+  .prose-med ol {
+    @apply list-decimal space-y-1.5 pl-5 marker:text-primary;
+  }
+  .prose-med strong {
+    @apply font-semibold text-foreground;
+  }
+  .prose-med a {
+    @apply text-primary underline underline-offset-2;
+  }
+  .prose-med blockquote {
+    @apply border-l-2 border-primary/40 pl-3 text-muted-foreground;
+  }
+  .prose-med code {
+    @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em];
+  }
+  .prose-med table {
+    @apply w-full border-collapse overflow-hidden rounded-lg text-sm;
+  }
+  .prose-med th {
+    @apply border-b border-border bg-muted/70 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide;
+  }
+  .prose-med td {
+    @apply border-b border-border/60 px-3 py-2 align-top;
+  }
+  .prose-med hr {
+    @apply my-5 border-border;
+  }
+}
+
+@layer utilities {
+  .balance {
+    text-wrap: balance;
+  }
+  .pretty {
+    text-wrap: pretty;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
