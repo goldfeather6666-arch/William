@@ -10,14 +10,12 @@ import {
   type ReactNode,
 } from "react";
 import {
-  Brain,
-  FileText,
-  Layers,
+  FolderOpen,
   LayoutDashboard,
-  Library,
   MessageSquare,
   Search,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import {
   Dialog,
@@ -39,11 +37,8 @@ interface CommandItem {
 
 const COMMAND_ITEMS: CommandItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "AI Tutor", href: "/tutor", icon: MessageSquare },
-  { label: "Flashcards", href: "/flashcards", icon: Layers },
-  { label: "MCQ Bank", href: "/mcq", icon: Brain },
-  { label: "Notes", href: "/notes", icon: FileText },
-  { label: "Library", href: "/library", icon: Library },
+  { label: "AI Tutor", href: "/tutor", icon: Sparkles },
+  { label: "Knowledge Library", href: "/library", icon: FolderOpen },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -52,9 +47,7 @@ interface CommandPaletteContextValue {
   setOpen: (open: boolean) => void;
 }
 
-const CommandPaletteContext = createContext<CommandPaletteContextValue | undefined>(
-  undefined,
-);
+const CommandPaletteContext = createContext<CommandPaletteContextValue | undefined>(undefined);
 
 export function useCommandPalette(): CommandPaletteContextValue {
   const context = useContext(CommandPaletteContext);
@@ -82,9 +75,7 @@ function CommandPalette() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="w-[min(34rem,calc(100vw-2rem))] gap-0 overflow-hidden p-0">
         <DialogTitle className="sr-only">Command palette</DialogTitle>
-        <DialogDescription className="sr-only">
-          Jump to a section of MedCoach AI
-        </DialogDescription>
+        <DialogDescription className="sr-only">Jump to a section of MedCoach AI</DialogDescription>
 
         <div className="flex items-center gap-2 border-b px-4">
           <Search className="size-4 shrink-0 text-muted-foreground" />
@@ -100,9 +91,7 @@ function CommandPalette() {
 
         <div className="max-h-[320px] overflow-y-auto p-2">
           {filtered.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-              No matches.
-            </p>
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">No matches.</p>
           ) : (
             <ul className="flex flex-col gap-0.5">
               {filtered.map((item) => {
@@ -137,10 +126,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (
-        (event.metaKey || event.ctrlKey) &&
-        event.key.toLowerCase() === "k"
-      ) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setCommandOpen((previous) => !previous);
       }
