@@ -60,7 +60,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Resolve conversation.
   let conversationId = body.conversationId;
   if (conversationId) {
     const { data: conv } = await supabase
@@ -83,7 +82,6 @@ export async function POST(req: Request) {
     conversationId = created.id;
   }
 
-  // Persist user message.
   await supabase.from("ai_messages").insert({
     conversation_id: conversationId,
     user_id: user.id,
@@ -91,7 +89,6 @@ export async function POST(req: Request) {
     content,
   });
 
-  // Load history (system excluded).
   const { data: historyRows } = await supabase
     .from("ai_messages")
     .select("role,content")
@@ -105,9 +102,8 @@ export async function POST(req: Request) {
   }));
   const historyForModel = history.slice(-16);
 
-  // Optional RAG over the user's own document chunks.
   let ragContext = "";
-  let citations: Citation[] = [];
+  const citations: Citation[] = [];
   if (body.documentId) {
     const { data: chunks } = await supabase
       .from("document_chunks")
@@ -123,15 +119,15 @@ export async function POST(req: Request) {
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
       if (ranked.length > 0) {
-        ragContext = ranked
-          .map((r, i) => `[source ${i + 1}] ${r.c.content}`)
-          .join("\n\n");
+        ragContext = ranked.map((r, i) => `[source ${i + 1}] ${r.c.content}`).join("\n\n");
         const { data: doc } = await supabase.from("documents").select("id,title").eq("id", body.documentId).single();
-        citations = ranked.map((r) => ({
-          documentId: body.documentId as string,
-          title: doc?.title ?? "Uploaded document",
-          page: (r.c.page as number | null) ?? null,
-        }));
+        for (const r of ranked) {
+          citations.push({
+            documentId: body.documentId as string,
+            title: doc?.title ?? "Uploaded document",
+            page: (r.c.page as number | null) ?? null,
+          });
+        }
       }
     }
   }
@@ -163,6 +159,22 @@ export async function POST(req: Request) {
       };
 
       let fullText = "";
+      const persistAssistant = async () => {
+        if (!fullText.trim()) return;
+        await supabase.from("ai_messages").insert({
+          conversation_id: conversationId as string,
+          user_id: user.id,
+          role: "assistant",
+          content: fullText,
+          citations: citations as unknown as object,
+          model: provider.model,
+        });
+        await supabase
+          .from("ai_conversations")
+          .update({ updated_at: new Date().toISOString() })
+          .eq("id", conversationId);
+      };
+
       try {
         if (provider.behavior === "openai") {
           const res = await fetch(`${provider.baseUrl}/chat/completions`, {
@@ -221,41 +233,17 @@ export async function POST(req: Request) {
             }
           }
         } else {
-          // Anthropic: non-streaming fallback.
           const result = await generateText(provider, messages);
           fullText = result.text;
           if (fullText) send("delta", { text: fullText });
         }
 
-        if (fullText.trim()) {
-          await supabase.from("ai_messages").insert({
-            conversation_id: conversationId as string,
-            user_id: user.id,
-            role: "assistant",
-            content: fullText,
-            citations: citations as unknown as never,
-            model: provider.model,
-          });
-          await supabase
-            .from("ai_conversations")
-            .update({ updated_at: new Date().toISOString() })
-            .eq("id", conversationId);
-        }
+        await persistAssistant();
         send("done", { conversationId, citations });
       } catch (e) {
         const message = e instanceof Error ? e.message : "Streaming failed";
-        fullText &&= "";
         send("error", { message });
-        if (fullText.trim()) {
-          await supabase.from("ai_messages").insert({
-            conversation_id: conversationId as string,
-            user_id: user.id,
-            role: "assistant",
-            content: fullText,
-            citations: citations as unknown as never,
-            model: provider.model,
-          });
-        }
+        await persistAssistant();
       } finally {
         try {
           controller.close();
