@@ -3,15 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  BookOpen,
-  ChevronsLeft,
-  FolderOpen,
-  Home,
-  Stethoscope,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { ChevronsLeft, FolderOpen, Home, Stethoscope, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -23,13 +15,6 @@ const primaryNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/tutor", label: "AI Tutor", icon: Sparkles },
   { href: "/library", label: "Knowledge Library", icon: FolderOpen },
-];
-
-const studyNav: NavItem[] = [
-  { href: "/notes", label: "Notes", icon: BookOpen },
-  { href: "/flashcards", label: "Flashcards", icon: BookOpen },
-  { href: "/mcq", label: "MCQ Bank", icon: BookOpen },
-  { href: "/cases", label: "Clinical Cases", icon: Stethoscope },
 ];
 
 function Item({ item, collapsed, active }: { item: NavItem; collapsed: boolean; active: boolean }) {
@@ -62,7 +47,6 @@ export function Sidebar({ open, onToggle }: { open: boolean; onToggle: () => voi
 
   return (
     <>
-      {/* Mobile overlay */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -88,32 +72,20 @@ export function Sidebar({ open, onToggle }: { open: boolean; onToggle: () => voi
             </span>
             {open && <span className="font-display text-base font-semibold">MedCoach</span>}
           </Link>
-          <Button variant="ghost" size="icon-sm" onClick={onToggle} aria-label="Toggle sidebar" className="lg:flex">
+          <Button variant="ghost" size="icon-sm" onClick={onToggle} aria-label="Toggle sidebar">
             {open ? <ChevronsLeft className="h-4 w-4" /> : <X className="h-4 w-4 lg:hidden" />}
           </Button>
         </div>
         <Separator />
-        <nav className="flex-1 space-y-6 overflow-y-auto p-3">
-          <div className="space-y-1">
-            {primaryNav.map((item) => (
-              <Item key={item.href} item={item} collapsed={!open} active={pathname === item.href} />
-            ))}
-          </div>
-          {open && (
-            <div className="space-y-1">
-              <p className="px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Study</p>
-              {studyNav.map((item) => (
-                <Item key={item.href} item={item} collapsed={false} active={pathname.startsWith(item.href)} />
-              ))}
-            </div>
-          )}
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          {primaryNav.map((item) => (
+            <Item key={item.href} item={item} collapsed={!open} active={pathname === item.href} />
+          ))}
         </nav>
         <div className="p-3">
-          <TooltipProvider>
-            <div className="rounded-lg border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground">
-              {open ? "MedCoach AI · educational use only" : <span className="sr-only">Educational use only</span>}
-            </div>
-          </TooltipProvider>
+          <div className="rounded-lg border border-border/60 bg-muted/40 p-3 text-xs text-muted-foreground">
+            {open ? "MedCoach AI · educational use only" : <span className="sr-only">Educational use only</span>}
+          </div>
         </div>
       </aside>
     </>
