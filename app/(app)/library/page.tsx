@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UploadDialog } from "@/components/library/upload-dialog";
+import { GenerateNotesDialog } from "@/components/library/generate-notes-dialog";
 import { formatBytes, formatDate, safeErrorMessage } from "@/lib/utils";
 import type { DocumentRow } from "@/lib/types";
 
@@ -142,7 +143,8 @@ export default function LibraryPage() {
                 {d.extracted_preview && d.status === "ready" && (
                   <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-muted-foreground">{d.extracted_preview}</p>
                 )}
-                <div className="mt-auto flex justify-end pt-3">
+                <div className="mt-auto flex justify-end gap-1 pt-3">
+                  <GenerateNotesDialog doc={d} />
                   <Button variant="ghost" size="icon-sm" onClick={() => removeDoc(d.id)} aria-label="Delete document">
                     <Trash2 className="h-4 w-4 text-muted-foreground" />
                   </Button>
@@ -154,7 +156,8 @@ export default function LibraryPage() {
       )}
 
       <p className="text-xs text-muted-foreground">
-        Tip: open the AI Tutor and pick a document from the context menu to ask questions grounded in that material.
+        Tip: open the AI Tutor and pick a document from the context menu to ask questions grounded in that material. Use
+        the sparkle icon on a processed document to generate notes from it.
       </p>
     </div>
   );
