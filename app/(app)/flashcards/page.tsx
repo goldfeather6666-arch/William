@@ -126,8 +126,9 @@ export default function FlashcardsPage() {
 
   async function grade(rating: number) {
     if (reviewBusy) return;
-    setReviewBusy(true);
     const card = queue[idx];
+    if (!card) return;
+    setReviewBusy(true);
     try {
       const res = await fetch("/api/flashcards/review", {
         method: "POST",
@@ -154,7 +155,7 @@ export default function FlashcardsPage() {
     }
   }
 
-  const current = queue[idx];
+  const current = queue[idx]!;
   const visibleDecks = decks.filter((d) => d.dueCount > 0);
 
   return (
