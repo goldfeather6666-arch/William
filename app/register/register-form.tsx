@@ -8,9 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export function RegisterForm() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
@@ -27,17 +24,29 @@ export function RegisterForm() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signUp({
+      // Always redirect back to the exact origin the user is on (works for
+      // localhost, Vercel preview, and production domains without hardcoding
+      // a build-time site URL).
+      const origin = window.location.origin;
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: { full_name: fullName.trim() },
-          emailRedirectTo: `${SITE_URL}/auth/callback?next=/dashboard`,
+          emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
         },
       });
       if (error) throw error;
-      toast.success("Check your inbox to verify your email.");
-      router.push("/login");
+      // If the project is configured with automatic email confirmation, the
+      // session is already established — go straight to onboarding. Otherwise
+      // the user must click the verification link.
+      if (data.session) {
+        router.push("/onboarding");
+        router.refresh();
+      } else {
+        toast.success("Check your inbox to verify your email.");
+        router.push("/login?next=/dashboard");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sign-up failed");
     } finally {
