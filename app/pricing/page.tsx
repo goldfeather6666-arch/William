@@ -345,7 +345,7 @@ export default function PricingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-4 py-20">
+        <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-4 py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl font-semibold tracking-tight">
               Frequently asked questions
@@ -378,7 +378,7 @@ export default function PricingPage() {
           </p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <Link href="/pricing" className="hover:text-foreground">Pricing</Link>
-            <Link href="/faq" className="hover:text-foreground">FAQ</Link>
+            <Link href="/pricing#faq" className="hover:text-foreground">FAQ</Link>
             <Link href="/login" className="hover:text-foreground">Log in</Link>
           </div>
         </div>
