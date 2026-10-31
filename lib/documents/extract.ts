@@ -12,7 +12,6 @@ export interface ExtractedText {
 
 function fallbackDecode(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  // Try UTF-8, then latin1.
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
@@ -20,8 +19,16 @@ function fallbackDecode(buffer: ArrayBuffer): string {
   }
 }
 
+function asString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.join("\n");
+  return String(value ?? "");
+}
+
 export async function extractPdf(buffer: ArrayBuffer): Promise<ExtractedText> {
-  const { text, totalPages } = await extractText(buffer);
+  const result = await extractText(buffer);
+  const text = asString(result.text).trim();
+  const totalPages = typeof result.totalPages === "number" ? result.totalPages : null;
   const segments: { page: number; text: string }[] = [];
   const split = text.split(/\f/);
   if (split.length > 1) {
@@ -30,14 +37,14 @@ export async function extractPdf(buffer: ArrayBuffer): Promise<ExtractedText> {
     });
   }
   return {
-    text: text.trim(),
+    text,
     pages: totalPages ?? (segments.length || null),
     pageSegments: segments.length ? segments : undefined,
   };
 }
 
 export async function extractDocx(buffer: ArrayBuffer): Promise<ExtractedText> {
-  const result = await mammoth.extractRawText({ buffer });
+  const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) });
   return { text: result.value.trim(), pages: null };
 }
 
@@ -45,7 +52,10 @@ export async function extractPptx(buffer: ArrayBuffer): Promise<ExtractedText> {
   const zip = await JSZip.loadAsync(buffer);
   const slideFiles = Object.keys(zip.files)
     .filter((f) => /^ppt\/slides\/slide\d+\.xml$/i.test(f))
-    .sort((a, b) => parseInt(a.match(/\d+/)![0] ?? "0", 10) - parseInt(b.match(/\d+/)![0] ?? "0", 10));
+    .sort(
+      (a, b) =>
+        parseInt(a.match(/\d+/)![0] ?? "0", 10) - parseInt(b.match(/\d+/)![0] ?? "0", 10),
+    );
   const parts: string[] = [];
   for (const name of slideFiles) {
     const xml = await zip.files[name]!.async("text");
