@@ -62,12 +62,13 @@ create table public.document_jobs (
 create index jobs_status_idx on public.document_jobs(status);
 
 -- Cosine similarity over jsonb embedding arrays (provider-agnostic).
+-- jsonb_array_elements_text returns text, so cast elements to numeric.
 create or replace function public.cosine_similarity(a jsonb, b jsonb)
 returns double precision language sql immutable as $$
   select case
     when a is null or b is null then 0
     else (
-      select (sum(x*y) / nullif(sqrt(sum(x*x)) * sqrt(sum(y*y)), 0))
+      select (sum(x::numeric * y::numeric) / nullif(sqrt(sum((x::numeric) * (x::numeric))) * sqrt(sum((y::numeric) * (y::numeric))), 0))
       from jsonb_array_elements_text(a) with ordinality as ax(x, i)
       join jsonb_array_elements_text(b) with ordinality as by(y, i) using (i)
     )
