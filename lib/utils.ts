@@ -44,10 +44,13 @@ export function formatBytes(bytes: number | null | undefined): string {
   const units = ["B", "KB", "MB", "GB"];
   const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   const value = bytes / 1024 ** exponent;
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
+  // Collapse trailing zeros so 2.0 KB becomes 2 KB while 1.5 MB stays precise.
+  const rounded = Number(value.toFixed(value >= 10 || exponent === 0 ? 0 : 1));
+  return `${rounded} ${units[exponent]}`;
 }
 
 export function initials(name: string | null | undefined, email?: string | null): string {
+  if (!name?.trim() && !email?.trim()) return "MC";
   const source = name?.trim() || email?.split("@")[0] || "Student";
   const parts = source.split(/[\s._-]+/).filter(Boolean);
   if (parts.length === 0) return "MC";
