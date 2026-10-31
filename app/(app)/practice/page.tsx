@@ -29,7 +29,7 @@ const COUNTS = [5, 10, 15, 20] as const;
 export default function PracticePage() {
   const [phase, setPhase] = React.useState<Phase>("setup");
   const [topics, setTopics] = React.useState<string[]>([]);
-  const [topic, setTopic] = React.useState("all");
+  const [topic, setTopic] = React.useState<string>("all");
   const [difficulty, setDifficulty] = React.useState<string>("all");
   const [count, setCount] = React.useState<number>(10);
   const [timed, setTimed] = React.useState(true);
@@ -126,6 +126,7 @@ export default function PracticePage() {
   async function choose(optionIndex: number) {
     if (selected !== null) return;
     const question = questions[idx];
+    if (!question) return;
     const correct = optionIndex === question.correct_index;
     setSelected(optionIndex);
     setAnswers((prev) => [...prev, correct]);
