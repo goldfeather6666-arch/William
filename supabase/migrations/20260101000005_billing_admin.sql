@@ -135,13 +135,13 @@ create policy audit_admin on public.audit_logs for all
 -- Seed subscription plans.
 insert into public.plans (code, name, price_cents_month, price_cents_year, monthly_credits, features) values
   ('free', 'Free', 0, 0, 50,
-   '["Limited AI tutoring", "50 credits / month", "Basic quizzes"]'),
+   array['Limited AI tutoring','50 credits / month','Basic quizzes']),
   ('student', 'Student', 1200, 12000, 500,
-   '["More AI usage", "Notes generation", "Advanced MCQs", "Study planner"]'),
+   array['More AI usage','Notes generation','Advanced MCQs','Study planner']),
   ('pro', 'Pro', 2400, 24000, 2000,
-   '["Advanced clinical simulations", "AI viva examiner", "Extensive document processing", "Detailed analytics"]'),
+   array['Advanced clinical simulations','AI viva examiner','Extensive document processing','Detailed analytics']),
   ('institution', 'Institution', 9999, 99990, 0,
-   '["Multi-student seats", "Instructor dashboard", "Group assignments", "Centralized billing"]');
+   array['Multi-student seats','Instructor dashboard','Group assignments','Centralized billing']);
 
 -- Helpful function: conservative credit balance (authored from ledger).
 create or replace function public.credit_balance(uid uuid)
