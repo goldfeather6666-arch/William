@@ -29,7 +29,7 @@ interface TopbarProps {
 function formatRole(role: Profile["role"]): string {
   return role
     .split("_")
-    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
+    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : part))
     .join(" ");
 }
 
