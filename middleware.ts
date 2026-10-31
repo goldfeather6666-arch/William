@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import type { SetAllCookies } from "@supabase/ssr/dist/module/types";
 import { NextResponse, type NextRequest } from "next/server";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,18 +17,20 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  const setAll: SetAllCookies = (cookiesToSet) => {
+    cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+    response = NextResponse.next({ request });
+    cookiesToSet.forEach(({ name, value, options }) => {
+      response.cookies.set(name, value, options);
+    });
+  };
+
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
+      setAll,
     },
   });
 
