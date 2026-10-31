@@ -9,7 +9,7 @@ import { requireSupabasePublicConfig } from "@/lib/env";
  */
 export async function createClient() {
   const cookieStore = await cookies();
-  const { url, anonKey } = requireSupabasePublicConfig();
+  const { url, key } = requireSupabasePublicConfig();
 
   const setAll: SetAllCookies = (cookiesToSet) => {
     try {
@@ -22,7 +22,7 @@ export async function createClient() {
     }
   };
 
-  return createServerClient(url, anonKey, {
+  return createServerClient(url, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
