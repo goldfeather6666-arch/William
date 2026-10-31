@@ -26,6 +26,14 @@ export function TiltCard({ className, children, maxTilt = 10, glare = true, ...p
 
   const glareX = useTransform(px, [0, 1], [0, 100]);
   const glareY = useTransform(py, [0, 1], [0, 100]);
+  const glareBackground = useTransform(
+    [glareX, glareY],
+    ([gx, gy]: number[]) => {
+      const x = (gx ?? 50).toFixed(1);
+      const y = (gy ?? 50).toFixed(1);
+      return `radial-gradient(circle at ${x}% ${y}%, hsl(var(--primary)/0.12), transparent 60%)`;
+    },
+  );
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (reduce) return;
@@ -48,20 +56,14 @@ export function TiltCard({ className, children, maxTilt = 10, glare = true, ...p
         onPointerLeave={onPointerLeave}
         style={reduce ? undefined : { rotateX, rotateY, transformStyle: "preserve-3d" }}
         className={cn("relative will-change-transform", className)}
-        {...(props as Record<string, never>)}
+        {...(props as object)}
       >
         {children}
         {glare && !reduce ? (
           <motion.div
             aria-hidden
             className="pointer-events-none absolute inset-0 rounded-[inherit]"
-            style={{
-              background: useTransform(
-                [glareX, glareY],
-                ([gx, gy]: number[]) =>
-                  `radial-gradient(circle at ${gx.toFixed(1)}% ${gy.toFixed(1)}%, hsl(var(--primary)/0.12), transparent 60%)`,
-              ),
-            }}
+            style={{ background: glareBackground }}
           />
         ) : null}
       </motion.div>
