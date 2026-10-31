@@ -1,14 +1,15 @@
 import {
   Brain,
+  CalendarClock,
   FileText,
   Layers,
   LayoutDashboard,
   Library,
   MessageSquare,
-  BookOpen,
-  GraduationCap,
   NotebookPen,
+  Shapes,
   SlidersHorizontal,
+  Stethoscope,
   TestTube2,
   UserRound,
   type LucideIcon,
@@ -44,5 +45,3 @@ export const ACCOUNT_NAV: NavItem[] = [
   { label: "Profile", href: "/profile", icon: UserRound },
   { label: "Settings", href: "/settings", icon: SlidersHorizontal },
 ];
-
-import { CalendarClock, Shapes, Stethoscope } from "lucide-react";
