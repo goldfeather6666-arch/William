@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/shell/app-shell";
 import { Logo } from "@/components/common/logo";
 import { MAIN_NAV } from "@/lib/navigation";
@@ -30,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const navItems =
     profile.role === "platform_admin"
-      ? [...MAIN_NAV, { label: "Admin", href: "/admin", icon: "shield" }]
+      ? [...MAIN_NAV, { label: "Admin", href: "/admin", icon: ShieldCheck }]
       : MAIN_NAV;
 
   return (
