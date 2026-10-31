@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AI_PROVIDERS, type AiProviderId, type Profile } from "@/lib/types";
+import { AI_PROVIDERS, type AiProviderId, type Profile, type CurriculumCode } from "@/lib/types";
 import { safeErrorMessage } from "@/lib/utils";
 
 const labels: Record<AiProviderId, string> = {
@@ -72,15 +72,18 @@ export default function SettingsPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not signed in");
-      const { error } = await supabase.from("profiles").update({
-        full_name: profile.full_name,
-        country: profile.country,
-        curriculum: profile.curriculum,
-        degree: profile.degree,
-        academic_year: profile.academic_year,
-        daily_study_minutes: profile.daily_study_minutes,
-        explanation_level: profile.explanation_level,
-      }).eq("id", user.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: profile.full_name,
+          country: profile.country,
+          curriculum: profile.curriculum,
+          degree: profile.degree,
+          academic_year: profile.academic_year,
+          daily_study_minutes: profile.daily_study_minutes,
+          explanation_level: profile.explanation_level,
+        })
+        .eq("id", user.id);
       if (error) throw error;
       toast.success("Profile saved");
       router.refresh();
@@ -143,7 +146,11 @@ export default function SettingsPage() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Curriculum</Label>
-                  <Input value={profile.curriculum ?? ""} onChange={(e) => setProfile({ ...profile, curriculum: e.target.value })} />
+                  <Input
+                    value={profile.curriculum ?? ""}
+                    onChange={(e) => setProfile({ ...profile, curriculum: (e.target.value || null) as CurriculumCode | null })}
+                    placeholder="e.g. bd-mbbs"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Degree</Label>
@@ -171,7 +178,10 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Explanation level</Label>
-                  <Select value={profile.explanation_level} onValueChange={(v) => setProfile({ ...profile, explanation_level: v as Profile["explanation_level"] })}>
+                  <Select
+                    value={profile.explanation_level}
+                    onValueChange={(v) => setProfile({ ...profile, explanation_level: v as Profile["explanation_level"] })}
+                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="beginner">Beginner-friendly</SelectItem>
