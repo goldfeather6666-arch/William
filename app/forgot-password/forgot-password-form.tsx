@@ -7,9 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -20,8 +17,9 @@ export function ForgotPasswordForm() {
     setLoading(true);
     try {
       const supabase = createClient();
+      const origin = window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${SITE_URL}/auth/callback?next=/reset-password`,
+        redirectTo: `${origin}/auth/callback?next=/reset-password`,
       });
       if (error) throw error;
       setSent(true);
