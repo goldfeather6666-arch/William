@@ -597,7 +597,7 @@ export default function ExamPage() {
                       <p className="text-muted-foreground">
                         Your answer:{" "}
                         <span className={cn("font-medium", isCorrect ? "text-primary" : "text-destructive")}>
-                          {chosen !== null ? `${optionLetter(chosen)} — ${p.question.options[chosen] ?? ""}` : "Unanswered"}
+                          {chosen !== null && chosen !== undefined ? `${optionLetter(chosen)} — ${p.question.options[chosen] ?? ""}` : "Unanswered"}
                         </span>
                       </p>
                       {!isCorrect && (
