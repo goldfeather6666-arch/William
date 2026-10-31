@@ -1,16 +1,11 @@
 import {
-  Brain,
-  CalendarClock,
-  FileText,
-  Layers,
+  FolderOpen,
   LayoutDashboard,
   Library,
   MessageSquare,
-  NotebookPen,
-  Shapes,
+  Settings,
   SlidersHorizontal,
-  Stethoscope,
-  TestTube2,
+  Sparkles,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -23,25 +18,20 @@ export interface NavItem {
 }
 
 /**
- * Primary application navigation. Used by the sidebar, mobile nav and
- * command palette. The `active` state is derived per-route by the shell.
+ * Primary application navigation — routes that are implemented in the app.
+ * New modules (flashcards, MCQ bank, cases, exams, planner, pharmacology, OSCE,
+ * visual studio) are added here as they ship so every link stays functional.
  */
 export const MAIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "AI Tutor", href: "/tutor", icon: MessageSquare },
-  { label: "Flashcards", href: "/flashcards", icon: Layers },
-  { label: "MCQ Bank", href: "/mcq", icon: Brain },
-  { label: "Notes", href: "/notes", icon: FileText },
-  { label: "Clinical Cases", href: "/cases", icon: Stethoscope },
-  { label: "Mock Exams", href: "/exams", icon: NotebookPen },
-  { label: "Study Planner", href: "/planner", icon: CalendarClock },
-  { label: "Library", href: "/library", icon: Library },
-  { label: "Pharmacology", href: "/pharmacology", icon: TestTube2 },
-  { label: "OSCE", href: "/osce", icon: BookOpen },
-  { label: "Visual Studio", href: "/visual", icon: Shapes },
+  { label: "Knowledge Library", href: "/library", icon: FolderOpen },
 ];
 
 export const ACCOUNT_NAV: NavItem[] = [
-  { label: "Profile", href: "/profile", icon: UserRound },
+  { label: "Profile", href: "/settings", icon: UserRound },
   { label: "Settings", href: "/settings", icon: SlidersHorizontal },
 ];
+
+/** Icons used by empty/quick actions on pages. */
+export const NAV_ICONS = { Sparkles, Settings, Library };
