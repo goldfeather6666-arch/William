@@ -3,7 +3,9 @@ import type { SetAllCookies } from "@supabase/ssr/dist/module/types";
 import { NextResponse, type NextRequest } from "next/server";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 /**
  * Refreshes the Supabase auth session on every request. Acts as a no-op
@@ -13,7 +15,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
     return response;
   }
 
@@ -25,7 +27,7 @@ export async function middleware(request: NextRequest) {
     });
   };
 
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
