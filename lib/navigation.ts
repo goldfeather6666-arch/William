@@ -1,11 +1,13 @@
 import {
+  FileQuestion,
   FolderOpen,
+  HeartPulse,
   LayoutDashboard,
-  Library,
   MessageSquare,
   Settings,
   SlidersHorizontal,
   Sparkles,
+  SquareStack,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -19,12 +21,14 @@ export interface NavItem {
 
 /**
  * Primary application navigation — routes that are implemented in the app.
- * New modules (flashcards, MCQ bank, cases, exams, planner, pharmacology, OSCE,
- * visual studio) are added here as they ship so every link stays functional.
+ * New modules are added here as they ship so every link stays functional.
  */
 export const MAIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "AI Tutor", href: "/tutor", icon: MessageSquare },
+  { label: "Flashcards", href: "/flashcards", icon: SquareStack },
+  { label: "MCQ Practice", href: "/practice", icon: FileQuestion },
+  { label: "Clinical Cases", href: "/cases", icon: HeartPulse },
   { label: "Knowledge Library", href: "/library", icon: FolderOpen },
 ];
 
@@ -34,4 +38,4 @@ export const ACCOUNT_NAV: NavItem[] = [
 ];
 
 /** Icons used by empty/quick actions on pages. */
-export const NAV_ICONS = { Sparkles, Settings, Library };
+export const NAV_ICONS = { Sparkles, Settings };
