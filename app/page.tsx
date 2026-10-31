@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/common/logo";
 import { AnimatedBackground } from "@/components/landing/animated-background";
-import { ChiltCard, RevealBlock } from "@/components/landing/tilt-card";
+import { TiltCard, RevealBlock } from "@/components/landing/tilt-card";
 import { Marquee } from "@/components/landing/marquee";
 import { HeroMockup } from "@/components/landing/hero-mockup";
 import { StatsBand } from "@/components/landing/stats-band";
