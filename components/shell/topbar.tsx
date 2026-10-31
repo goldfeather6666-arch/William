@@ -1,9 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { Bell, Menu, Search, UserRound } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { Bell, LogOut, Menu, Search, Settings, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,144 +15,142 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { initials } from "@/lib/utils";
-import type { Profile } from "@/lib/types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { createClient } from "@/lib/supabase/client";
+import { initials, fromNow } from "@/lib/utils";
 
-interface TopbarProps {
+type NotificationRow = {
+  id: string;
   title: string;
-  subtitle?: string;
-  onOpenCommand?: () => void;
-  onOpenNotifications?: () => void;
-  onOpenMenu?: () => void;
-  unreadCount?: number;
-  user?: Profile | null;
-  menuItems?: ReactNode;
-}
-
-function formatRole(role: Profile["role"]): string {
-  return role
-    .split("_")
-    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : part))
-    .join(" ");
-}
-
-function UserMenu({ user }: { user: Profile }) {
-  const name = user.full_name ?? user.email ?? "Student";
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-9 rounded-full"
-          aria-label="Account menu"
-        >
-          <Avatar className="size-9">
-            <AvatarImage src={user.avatar_url ?? undefined} alt={name} />
-            <AvatarFallback className="text-xs">
-              {initials(name, user.email)}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-60">
-        <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold text-foreground">{name}</span>
-          <span className="text-xs font-normal capitalize text-muted-foreground">
-            {formatRole(user.role)}
-          </span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <a href="/profile" className="cursor-pointer">
-            <UserRound className="size-4" />
-            Profile
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href="/settings" className="cursor-pointer">
-            Settings
-          </a>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+  body: string | null;
+  kind: string;
+  href: string | null;
+  created_at: string;
+};
 
 export function Topbar({
-  title,
-  subtitle,
-  onOpenCommand,
-  onOpenNotifications,
-  onOpenMenu,
-  unreadCount = 0,
   user,
-  menuItems,
-}: TopbarProps) {
+  onOpenPalette,
+  onToggleSidebar,
+}: {
+  user: { email?: string; name?: string };
+  onOpenPalette: () => void;
+  onToggleSidebar: () => void;
+}) {
+  const router = useRouter();
+  const [notifications, setNotifications] = React.useState<NotificationRow[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("notifications")
+          .select("id,title,body,kind,href,created_at")
+          .order("created_at", { ascending: false })
+          .limit(8);
+        if (active) setNotifications((data as NotificationRow[]) ?? []);
+      } catch {
+        // Supabase not configured — leave empty.
+      } finally {
+        if (active) setLoaded(true);
+      }
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleSignOut() {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur sm:px-4">
-      {onOpenMenu ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          onClick={onOpenMenu}
-          aria-label="Open navigation menu"
-        >
-          <Menu className="size-5" />
-        </Button>
-      ) : null}
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6">
+      <Button variant="ghost" size="icon-sm" onClick={onToggleSidebar} aria-label="Toggle sidebar" className="lg:hidden">
+        <Menu className="h-4 w-4" />
+      </Button>
 
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-base font-semibold tracking-tight">
-          {title}
-        </h1>
-        {subtitle ? (
-          <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
-        ) : null}
+      <button
+        onClick={onOpenPalette}
+        className="flex h-9 w-full max-w-xs items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted"
+      >
+        <Search className="h-4 w-4" />
+        <span className="flex-1 text-left">Search…</span>
+        <kbd className="kbd hidden sm:inline-block">⌘K</kbd>
+      </button>
+
+      <div className="ml-auto flex items-center gap-1">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+              {notifications.length > 0 && (
+                <Badge variant="clinical" className="absolute -right-0.5 -top-0.5 h-4 min-w-4 rounded-full px-1 text-[10px]">
+                  {notifications.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80">
+            <div className="mb-2 font-semibold">Notifications</div>
+            {!loaded ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : notifications.length === 0 ? (
+              <p className="text-sm text-muted-foreground">You&apos;re all caught up.</p>
+            ) : (
+              <ul className="space-y-3">
+                {notifications.map((n) => (
+                  <li key={n.id} className="text-sm">
+                    <div className="font-medium">{n.title}</div>
+                    {n.body && <div className="text-muted-foreground">{n.body}</div>}
+                    <div className="text-xs text-muted-foreground">{fromNow(n.created_at)}</div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        <ThemeToggle />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="ml-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>{initials(user.name, user.email)}</AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="text-sm font-semibold">{user.name || "Student"}</div>
+              <div className="text-xs font-normal text-muted-foreground">{user.email}</div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+              <User className="h-4 w-4" /> Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <Settings className="h-4 w-4" /> Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" /> Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-
-      {onOpenCommand ? (
-        <>
-          <Button
-            variant="outline"
-            onClick={onOpenCommand}
-            className="hidden h-9 w-56 justify-start gap-2 rounded-lg text-muted-foreground sm:inline-flex"
-          >
-            <Search className="size-4" />
-            <span className="text-sm">Search…</span>
-            <kbd className="kbd ml-auto">⌘K</kbd>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onOpenCommand}
-            className="sm:hidden"
-            aria-label="Search"
-          >
-            <Search className="size-5" />
-          </Button>
-        </>
-      ) : null}
-
-      {onOpenNotifications ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onOpenNotifications}
-          aria-label="Notifications"
-          className="relative"
-        >
-          <Bell className="size-5" />
-          {unreadCount > 0 ? (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          ) : null}
-        </Button>
-      ) : null}
-
-      {menuItems ?? (user ? <UserMenu user={user} /> : null)}
     </header>
   );
 }
