@@ -28,9 +28,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const profile = await getProfile(user.id);
   if (!profile) redirect("/onboarding");
 
+  const navItems =
+    profile.role === "platform_admin"
+      ? [...MAIN_NAV, { label: "Admin", href: "/admin", icon: "shield" }]
+      : MAIN_NAV;
+
   return (
     <AppShell
-      items={MAIN_NAV}
+      items={navItems}
       user={{ email: profile.email ?? undefined, name: profile.full_name ?? undefined }}
       header={<Logo size="md" />}
     >
