@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, FolderOpen, Sparkles, Timer } from "lucide-react";
+import { ArrowRight, FileQuestion, FolderOpen, HeartPulse, MessageSquare, Sparkles, SquareStack, Timer } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
 
@@ -42,8 +42,11 @@ export default async function DashboardPage() {
   const correctPct = data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0;
 
   const modules = [
-    { href: "/tutor", icon: Sparkles, title: "AI Tutor", blurb: "Ask anything, in 6 modes" },
-    { href: "/library", icon: FolderOpen, title: "Knowledge Library", blurb: "Upload and ask against your materials" },
+    { href: "/tutor", icon: MessageSquare, title: "AI Tutor", blurb: "Ask anything, in 6 modes" },
+    { href: "/flashcards", icon: SquareStack, title: "Flashcards", blurb: `${data.dueCards} cards due for review` },
+    { href: "/practice", icon: FileQuestion, title: "MCQ Practice", blurb: "Timed single-best-answer practice" },
+    { href: "/cases", icon: HeartPulse, title: "Clinical Cases", blurb: "Simulated patients, step by step" },
+    { href: "/library", icon: FolderOpen, title: "Knowledge Library", blurb: `${data.readyDocs} documents processed and searchable` },
   ];
 
   return (
@@ -123,9 +126,9 @@ export default async function DashboardPage() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Continue learning</h2>
-          <Badge variant="soft">2 modules</Badge>
+          <Badge variant="soft">{modules.length} modules</Badge>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {modules.map((m) => (
             <Link key={m.href} href={m.href}>
               <Card className="h-full transition-shadow hover:shadow-lifted">
